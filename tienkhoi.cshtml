@@ -1,0 +1,73 @@
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Extensions
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage
+@{
+    Layout = null;
+    var path = Context.Request.Path.ToString().ToLower();
+    
+    // Gom nhóm các trang dùng giao diện tối giản
+    var isMinimalPage = path.Contains("/su-kien") || path.Contains("/events") || path.Contains("/landing");
+    
+    // Class cho Body để đồng bộ với hệ thống màu Dark/Light đã định nghĩa trong CSS
+    var bodyClasses = "flex flex-col min-h-screen antialiased bg-white text-gray-800 dark:bg-[#0a0a0b] dark:text-gray-100 transition-colors duration-300";
+}
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+    <link rel="icon" href="/media/wcdir23l/tienkhoi_logo.svg" />
+    
+    @* Google Fonts - Tối ưu font Inter *@
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    @* SỬA LỖI: Thêm dấu @ vào trước hàm gọi Partial View *@
+    @await Html.PartialAsync("Partials/TienKhoi/TKSeo", Model)
+    
+    @* CSS chính của hệ thống VTL *@    
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    @* Thêm vị trí để trang con đẩy CSS riêng vào nếu cần *@
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="@bodyClasses">
+    @* 1. Topbar & Header: Ẩn trên các trang minimal hoặc khi in *@
+    @if (!isMinimalPage)
+    {
+        <div class="print:hidden">
+            @await Html.PartialAsync("Partials/TienKhoi/TKTopbar")
+            @await Html.PartialAsync("Partials/TienKhoi/TKHeader")
+        </div>
+    }
+
+    @* 2. Main Content: SỬA LỖI chèn RenderBody để hiển thị nội dung trang con *@
+    <main id="main-content" class="flex-grow"> 
+       @RenderBody()
+    </main>
+
+    @* 3. Footer *@
+    @if (!isMinimalPage)
+    {
+        <footer class="print:hidden">
+            @await Html.PartialAsync("Partials/TienKhoi/TKFooter")
+            @await Html.PartialAsync("Partials/TienKhoi/TKCopyright")
+        </footer>
+    }
+
+    @* 4. Floating Elements *@
+    <aside class="print:hidden">
+        @await Html.PartialAsync("Partials/Shared/BackToTop")
+    </aside>
+
+    @* 5. Scripts: Load AlpineJS và site.js tối ưu *@
+    <script src="~/Scripts/site.js" asp-append-version="true"></script>
+    
+    @* AlpineJS phục vụ cho các tương tác Menu, Dropdown *@
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    @* Thêm vị trí để trang con đẩy các đoạn script riêng xuống cuối trang *@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
