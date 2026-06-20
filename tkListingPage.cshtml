@@ -1,0 +1,68 @@
+
+	var sectionName = Model.Value<string>("section")?.ToLowerInvariant() ?? "default";
+    var items = Model.Children
+        .Where(x => x.IsVisible() && !x.Value<bool>("naviHide"))
+        .ToArray();
+    
+    var blocks = Model.Value<Umbraco.Cms.Core.Models.Blocks.BlockGridModel>("pageContent");
+    var noContentText = Umbraco.GetDictionaryValue("noContentText") ?? "Dữ liệu đang được cập nhật...";
+    var fallbackPartial = "Partials/blockgrid/Default";
+}
+@* 1. Banner Header đồng bộ phong cách Tech *@
+@await Html.PartialAsync("Partials/Shared/banner", Model)
+
+@* 2. Section Danh sách (Listing) - Thêm nền Grid mờ *@
+<section class="vtl-container bg-white dark:bg-[#080809] overflow-hidden">
+    @* Background Decor: Grid Mesh *@
+    <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" 
+         style="background-image: radial-gradient(#3b82f6 1px, transparent 1px); background-size: 30px 30px;"></div>
+
+    <div class="relative z-10 py-8">
+        @if (items.Any())
+        {
+            var listingPartial = $"Partials/Listing/{sectionName}";
+            var defaultListingPartial = $"Partials/Listing/Default";
+            var result = Engine.FindView(ViewContext, listingPartial, isMainPage: false);
+            var partialToRender = result.Success ? listingPartial : defaultListingPartial;
+            
+            @await Html.PartialAsync(partialToRender, items)
+        }
+        else
+        {
+            
+            @if (sectionName=="card")
+            {
+                @await Html.PartialAsync("Partials/Listing/card", Model)
+            }
+            else
+            {
+                <div class="text-center py-20 border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
+                    <p class="text-lg text-gray-800 dark:text-gray-300 mt-2 font-bold">@noContentText</p>
+                </div>
+
+            }
+        }
+        
+    </div>
+</section>
+
+@* 3. Section Block Grid: Render các khối nội dung phụ trợ *@
+@if (blocks?.Any() == true)
+{
+    <section class="bg-slate-50 dark:bg-[#0a0a0b] py-12 md:py-20 border-t dark:border-white/5">
+        <div class="max-w-7xl mx-auto px-4 md:px-6">
+            <div class="grid grid-cols-12 gap-y-12 gap-x-6 md:gap-x-10">
+                @foreach (var block in blocks)
+                {
+                    var alias = block.Content.ContentType.Alias;
+                    var partialPath = $"Partials/blockgrid/{alias}";
+                    var viewResult = Engine.FindView(ViewContext, partialPath, isMainPage: false);
+                    var partialToRender = viewResult.Success ? partialPath : fallbackPartial;
+                    
+                    @* Render Block với tham số truyền vào là toàn bộ block item *@
+                    @await Html.PartialAsync(partialToRender, block)
+                }
+            </div>
+        </div>
+    </section>
+}
